@@ -461,11 +461,11 @@ for t in range(num_of_iterations):
     generate_phi_theta()
     if t>=burnin:
     	burn_in()
-    compute_test_phi_theta()
+    #compute_test_phi_theta()
     train_log_likelihood="{:.13f}".format(compute_train_log_likelihood(train_data,theta_info,phi_g_info,phi_c_info_array))
     print("the log likelihood of traing data is:{}".format(train_log_likelihood))
-    test_log_likelihood="{:.13f}".format(compute_train_log_likelihood(test_data,test_theta_info,phi_g_info,phi_c_info_array))
-    print("the log likelihood of testing data is:{}".format(test_log_likelihood))
+    #test_log_likelihood="{:.13f}".format(compute_train_log_likelihood(test_data,test_theta_info,phi_g_info,phi_c_info_array))
+    #print("the log likelihood of testing data is:{}".format(test_log_likelihood))
 
 
 

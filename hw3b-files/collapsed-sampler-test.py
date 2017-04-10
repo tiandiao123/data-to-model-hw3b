@@ -6,8 +6,14 @@ import math
 #import numpy as np
 import time
 
+#alpha=float(sys.argv[6])
+#beta=float(sys.argv[7])
+#lmd=float(sys.argv[5])
+#num_of_iterations=int(sys.argv[8])
+#burnin=int(sys.argv[9])
 inputfile_test=sys.argv[2]
 inputfile_train=sys.argv[1]
+#K=int(sys.argv[4])#the number of topics
 
 outputfile=[]
 index=3
@@ -406,18 +412,16 @@ def output_tofile(outputtofile):
                     tempstr+=" {:.13f}".format(store_c_phi[0][token2index[ele]][i]/(num_of_iterations-burnin))
                 f.write(tempstr)
                 f.write("\n")
-        elif lines[1]=="phi1":
+        elif lines[1]=='phi1':
             for ele in vocabulary:
                 tempstr=ele
                 for i in range(K):
                     tempstr+=" {:.13f}".format(store_c_phi[1][token2index[ele]][i]/(num_of_iterations-burnin))
-                f.write(tempstr)
-                f.write("\n")
         elif lines[1]=='theta':
             for i in range(len(store_theta)):
                 tempstr="document "+str(i)+" :"
                 for j in range(K):
-                    tempstr+=" {:.13f}".format(store_theta[i][j]/(num_of_iterations-burnin))
+                    tempstr+=" {:.13f}".format(store_phi[i][j]/(num_of_iterations-burnin))
                 f.write(tempstr)
                 f.write("\n")
         elif lines[1]=="trainll":
@@ -508,14 +512,8 @@ for t in range(num_of_iterations):
     print end-start
     print "iteration ",t," ends"
 
-
-output_tofile("output.txt-trainll")
-output_tofile("output.txt-phi")
-output_tofile("output.txt-phi0")
-output_tofile("output.txt-phi1")
-output_tofile("output.txt-theta")
-output_tofile("output.txt-testll")
-
+for i in range(len(outputfile)):
+    output_tofile(outputfile[i])
     
     
  

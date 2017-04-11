@@ -327,8 +327,8 @@ def generate_phi_theta():
 
         for ele in vocabulary:
             phi_g_info[token2index[ele]][i]=(global_phi[token2index[ele]][i]+beta)/(sum_nk+V_train*beta)
-            phi_c_info_array[0][token2index[ele]][i]=(collection_phi[0][token2index[token]][i]+beta)/(sum_nk_c0+V_train*beta)
-            phi_c_info_array[1][token2index[ele]][i]=(collection_phi[1][token2index[token]][i]+beta)/(sum_nk_c1+V_train*beta)
+            phi_c_info_array[0][token2index[ele]][i]=(collection_phi[0][token2index[ele]][i]+beta)/(sum_nk_c0+V_train*beta)
+            phi_c_info_array[1][token2index[ele]][i]=(collection_phi[1][token2index[ele]][i]+beta)/(sum_nk_c1+V_train*beta)
 
 
 def compute_train_log_likelihood(data,theta_info,phi_g_info,phi_c_info_array):

@@ -433,7 +433,7 @@ def burn_in():
             store_test_theta[i][j]+=test_theta_info[i][j]
 
     for i in range(K):
-        for ele in vocabulary_train:
+        for ele in vocabulary:
             store_g_phi[token2index[ele]][i]+=phi_g_info[token2index[ele]][i]
             store_c_phi[0][token2index[ele]][i]+=phi_c_info_array[0][token2index[ele]][i]
             store_c_phi[1][token2index[ele]][i]+=phi_c_info_array[1][token2index[ele]][i]
@@ -527,17 +527,17 @@ for t in range(num_of_iterations):
 
 for i in range(len(doc_topics)):
     for j in range(K):
-        store_theta[i][j]/=(num_of_iterations-burnin)
+        store_theta[i][j]/=float(num_of_iterations-burnin)
 
 for i in range(len(doc_topics_test)):
     for j in range(K):
-        store_test_theta[i][j]/=(num_of_iterations-burnin)
+        store_test_theta[i][j]/=float(num_of_iterations-burnin)
 
 for i in range(K):
-    for ele in vocabulary_train:
-        store_g_phi[token2index[ele]][i]/=(num_of_iterations-burnin)
-        store_c_phi[0][token2index[ele]][i]/=(num_of_iterations-burnin)
-        store_c_phi[1][token2index[ele]][i]/=(num_of_iterations-burnin)
+    for ele in vocabulary:
+        store_g_phi[token2index[ele]][i]/=float(num_of_iterations-burnin)
+        store_c_phi[0][token2index[ele]][i]/=float(num_of_iterations-burnin)
+        store_c_phi[1][token2index[ele]][i]/=float(num_of_iterations-burnin)
 
 
 
@@ -548,32 +548,6 @@ output_tofile("output.txt-phi1")
 output_tofile("output.txt-theta")
 output_tofile("output.txt-testll")
 
- 
-def compute_average_log_likelihood(data,theta_info,phi_g_info,phi_c_info_array):
-    total_likelihood=0
-    d=-1
-    for tokens in data:
-        d+=1
-        tokens_sum=0
-        for token in tokens:
-            pre_log_sum=0
-            for k in range(K):
-                theta_dz=theta_info[d][k]
-                phi_z_wdi=phi_g_info[token2index[token]][k]
-                phi_z_wdi_cd=phi_c_info_array[int(tokens[0])][token2index[token]][k]
-                pre_log_sum+=theta_dz*((1-lmd)*phi_z_wdi+lmd*phi_z_wdi_cd)
-            if pre_log_sum<=sys.float_info.min:
-                #print pre_log_sum
-                continue
-            tokens_sum+=Decimal(pre_log_sum).ln()
-        total_likelihood+=tokens_sum
-    return total_likelihood   
-
-for i in range(len(store_test_theta)):
-    for j in range(K):
-        if store_test_theta[i][j]==0:
-            print store_test_theta[i][j]
-
-test_average_log_likelihood=compute_average_log_likelihood(test_data,store_test_theta,store_g_phi,store_c_phi)
+test_average_log_likelihood=compute_train_log_likelihood(test_data,store_test_theta,store_g_phi,store_c_phi)
 res="{:.13f}".format(test_average_log_likelihood)
 print("the test average likelihood is:{}".format(res))

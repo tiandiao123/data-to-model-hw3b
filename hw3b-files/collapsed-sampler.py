@@ -239,7 +239,7 @@ def get_distribution_doc_topic(flag,c_index,doc_index,token,token_index,doc_topi
     return K-1
 
 
-
+##
 def smaple_xdi(c_index,doc_index,token,x,z_d_token):
     global vocabulary
     global global_phi

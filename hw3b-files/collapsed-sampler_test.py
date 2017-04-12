@@ -5,15 +5,10 @@ import random
 import math
 #import numpy as np
 import time
+from decimal import *
 
-#alpha=float(sys.argv[6])
-#beta=float(sys.argv[7])
-#lmd=float(sys.argv[5])
-#num_of_iterations=int(sys.argv[8])
-#burnin=int(sys.argv[9])
 inputfile_test=sys.argv[2]
 inputfile_train=sys.argv[1]
-#K=int(sys.argv[4])#the number of topics
 
 outputfile=[]
 index=3
@@ -33,7 +28,7 @@ num_of_iterations=int(sys.argv[index])
 index+=1
 burnin=int(sys.argv[index])
 
-
+print(burnin)
 
 data=None
 with open(inputfile_train,'r') as f:
@@ -74,7 +69,6 @@ token2index={}
 for i in range(len(list1)):
     token2index[list1[i]]=i
 
-print "token2index(korean): ",token2index['korean']
 V_test=len(vocabulary_test)
 V=len(vocabulary)
 
@@ -189,6 +183,8 @@ for tokens in test_data:
         doc_topics_test[len(doc_topics_test)-1][random_topic]+=1
         x_test[len(x_test)-1].append(x_d_i)
         array_test[d].append(random_topic)
+
+print len(doc_topics_test),len(doc_topics_test[0]),len(test_data)
         
 def get_distribution_doc_topic(flag,c_index,doc_index,token,token_index,doc_topics,istest,array):
     global K
@@ -197,6 +193,8 @@ def get_distribution_doc_topic(flag,c_index,doc_index,token,token_index,doc_topi
     global vocabulary
     global global_phi
     global collection_phi
+    global doc_topics_test
+    global array_test
 
     if istest==False:
         original_topic=array[doc_index][token_index]
@@ -241,7 +239,7 @@ def get_distribution_doc_topic(flag,c_index,doc_index,token,token_index,doc_topi
     return K-1
 
 
-
+##
 def smaple_xdi(c_index,doc_index,token,x,z_d_token):
     global vocabulary
     global global_phi
@@ -329,8 +327,8 @@ def generate_phi_theta():
 
         for ele in vocabulary:
             phi_g_info[token2index[ele]][i]=(global_phi[token2index[ele]][i]+beta)/(sum_nk+V_train*beta)
-            phi_c_info_array[0][token2index[ele]][i]=(collection_phi[0][token2index[token]][i]+beta)/(sum_nk_c0+V_train*beta)
-            phi_c_info_array[1][token2index[ele]][i]=(collection_phi[1][token2index[token]][i]+beta)/(sum_nk_c1+V_train*beta)
+            phi_c_info_array[0][token2index[ele]][i]=(collection_phi[0][token2index[ele]][i]+beta)/(sum_nk_c0+V_train*beta)
+            phi_c_info_array[1][token2index[ele]][i]=(collection_phi[1][token2index[ele]][i]+beta)/(sum_nk_c1+V_train*beta)
 
 
 def compute_train_log_likelihood(data,theta_info,phi_g_info,phi_c_info_array):
@@ -384,57 +382,9 @@ def compute_test_phi_theta():
     global test_theta_info
     for i in range(len(doc_topics_test)):
         for j in range(K):
-            temp=(doc_topics_test[i][j]+alpha)/(len(array_test[j])+K*alpha)
+            temp=(doc_topics_test[i][j]+alpha)/(len(array_test[i])+K*alpha)
             test_theta_info[i][j]=temp
 
-
-
- 
-def output_tofile(outputtofile):
-    global vocabulary
-    global vocabulary_train
-    global vocabulary_test
-
-    lines=outputtofile.split("-")
-    with open(outputtofile,"w+") as f:
-        #list_vocabulary=list(vocabulary)
-        if lines[1]=="phi":
-            for ele in vocabulary_train:
-                tempstr=ele
-                for i in range(K):
-                    tempstr+=" {:.13f}".format(store_g_phi[token2index[ele]][i]/(num_of_iterations-burnin))
-                f.write(tempstr)
-                f.write("\n")
-        elif lines[1]=="phi0":
-            for ele in vocabulary_train:
-                tempstr=ele
-                for i in range(K):
-                    tempstr+=" {:.13f}".format(store_c_phi[0][token2index[ele]][i]/(num_of_iterations-burnin))
-                f.write(tempstr)
-                f.write("\n")
-        elif lines[1]=='phi1':
-            for ele in vocabulary:
-                tempstr=ele
-                for i in range(K):
-                    tempstr+=" {:.13f}".format(store_c_phi[1][token2index[ele]][i]/(num_of_iterations-burnin))
-        elif lines[1]=='theta':
-            for i in range(len(store_theta)):
-                tempstr="document "+str(i)+" :"
-                for j in range(K):
-                    tempstr+=" {:.13f}".format(store_phi[i][j]/(num_of_iterations-burnin))
-                f.write(tempstr)
-                f.write("\n")
-        elif lines[1]=="trainll":
-            for i in range(len(log_likelihood_train)):
-                temp=str(log_likelihood_train[i])
-                f.write(temp)
-                f.write("\n")
-        elif lines[1]=="testll":
-            for i in range(len(log_likeihood_test)):
-                temp=str(log_likeihood_test[i])
-                f.write(temp)
-                f.write("\n")
-        f.close()
 
 store_theta=[]
 for i in range(len(doc_topics)):
@@ -447,8 +397,15 @@ for i in range(len(doc_topics)):
 store_g_phi=[]
 for i in range(V):
     store_g_phi.append([])
-    for j in range(V):
+    for j in range(K):
         store_g_phi[i].append(0)
+
+
+store_test_theta=[]
+for i in range(len(doc_topics_test)):
+    store_test_theta.append([])
+    for j in range(K):
+        store_test_theta[i].append(0)
 
 store_c_phi=[]
 store_c_phi.append([])
@@ -471,11 +428,65 @@ def burn_in():
         for j in range(K):
             store_theta[i][j]+=theta_info[i][j]
 
+    for i in range(len(doc_topics_test)):
+        for j in range(K):
+            store_test_theta[i][j]+=test_theta_info[i][j]
+
     for i in range(K):
-        for ele in vocabulary_train:
+        for ele in vocabulary:
             store_g_phi[token2index[ele]][i]+=phi_g_info[token2index[ele]][i]
             store_c_phi[0][token2index[ele]][i]+=phi_c_info_array[0][token2index[ele]][i]
             store_c_phi[1][token2index[ele]][i]+=phi_c_info_array[1][token2index[ele]][i]
+
+
+
+def output_tofile(outputtofile):
+    global vocabulary
+    global vocabulary_train
+    global vocabulary_test
+
+    lines=outputtofile.split("-")
+    with open(outputtofile,"w+") as f:
+        #list_vocabulary=list(vocabulary)
+        if lines[1]=="phi":
+            for ele in vocabulary_train:
+                tempstr=ele
+                for i in range(K):
+                    tempstr+=" {:.13f}".format(store_g_phi[token2index[ele]][i])
+                f.write(tempstr)
+                f.write("\n")
+        elif lines[1]=="phi0":
+            for ele in vocabulary_train:
+                tempstr=ele
+                for i in range(K):
+                    tempstr+=" {:.13f}".format(store_c_phi[0][token2index[ele]][i])
+                f.write(tempstr)
+                f.write("\n")
+        elif lines[1]=="phi1":
+            for ele in vocabulary:
+                tempstr=ele
+                for i in range(K):
+                    tempstr+=" {:.13f}".format(store_c_phi[1][token2index[ele]][i])
+                f.write(tempstr)
+                f.write("\n")
+        elif lines[1]=='theta':
+            for i in range(len(store_theta)):
+                tempstr="document "+str(i)+" :"
+                for j in range(K):
+                    tempstr+=" {:.13f}".format(store_theta[i][j])
+                f.write(tempstr)
+                f.write("\n")
+        elif lines[1]=="trainll":
+            for i in range(len(log_likelihood_train)):
+                temp=str(log_likelihood_train[i])
+                f.write(temp)
+                f.write("\n")
+        elif lines[1]=="testll":
+            for i in range(len(log_likeihood_test)):
+                temp=str(log_likeihood_test[i])
+                f.write(temp)
+                f.write("\n")
+        f.close()
 
 
 
@@ -512,8 +523,31 @@ for t in range(num_of_iterations):
     print end-start
     print "iteration ",t," ends"
 
-for i in range(len(outputfile)):
-    output_tofile(outputfile[i])
-    
-    
- 
+
+
+for i in range(len(doc_topics)):
+    for j in range(K):
+        store_theta[i][j]/=float(num_of_iterations-burnin)
+
+for i in range(len(doc_topics_test)):
+    for j in range(K):
+        store_test_theta[i][j]/=float(num_of_iterations-burnin)
+
+for i in range(K):
+    for ele in vocabulary:
+        store_g_phi[token2index[ele]][i]/=float(num_of_iterations-burnin)
+        store_c_phi[0][token2index[ele]][i]/=float(num_of_iterations-burnin)
+        store_c_phi[1][token2index[ele]][i]/=float(num_of_iterations-burnin)
+
+
+
+output_tofile("output.txt-trainll")
+output_tofile("output.txt-phi")
+output_tofile("output.txt-phi0")
+output_tofile("output.txt-phi1")
+output_tofile("output.txt-theta")
+output_tofile("output.txt-testll")
+
+test_average_log_likelihood=compute_train_log_likelihood(test_data,store_test_theta,store_g_phi,store_c_phi)
+res="{:.13f}".format(test_average_log_likelihood)
+print("the test average likelihood is:{}".format(res))

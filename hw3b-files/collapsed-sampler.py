@@ -1,15 +1,16 @@
+########sh file
 import sys
 from operator import itemgetter
 from random import randint
 import random
 import math
-#import numpy as np
 import time
 from decimal import *
 
 inputfile_test=sys.argv[2]
 inputfile_train=sys.argv[1]
 
+## read command line arguments
 outputfile=[]
 index=3
 while sys.argv[index].startswith("output"):
@@ -27,10 +28,9 @@ index+=1
 num_of_iterations=int(sys.argv[index])
 index+=1
 burnin=int(sys.argv[index])
+#print(burnin)
 
-print(burnin)
-
-data=None
+# read train file
 with open(inputfile_train,'r') as f:
 	data=f.readlines()
 	f.close()
@@ -39,8 +39,7 @@ for line in data:
 	tokens=line.strip("\n").split(" ")
 	train_data.append(tokens)
 
-
-test_data1=None
+# read test file
 with open(inputfile_test,'r') as f:
 	test_data1=f.readlines()
 	f.close()
@@ -48,40 +47,34 @@ test_data=[]
 for line in test_data1:
 	tokens=line.strip("\n").split(" ")
 	test_data.append(tokens)
- 
 
-vocabulary_train=set()
-vocabulary_test=set()
+# create the vocabulary from train and test files
 vocabulary=set()
 for tokens in train_data:
     for token in tokens:
         vocabulary.add(token)
-        vocabulary_train.add(token)
-V_train=len(vocabulary_train)
-
 for tokens in test_data:
     for token in tokens:
-        vocabulary_test.add(token)
         vocabulary.add(token)
-        
-list1=list(vocabulary)
+
+vocabulary.remove('1')
+vocabulary.remove('0')
+V=len(vocabulary) # size of vocabulary
+
+
+# create an index embedding for vocabulary
+list_temp=list(vocabulary)
 token2index={}
-for i in range(len(list1)):
-    token2index[list1[i]]=i
-
-V_test=len(vocabulary_test)
-V=len(vocabulary)
+for i in range(len(list_temp)):
+    token2index[list_temp[i]]=i
 
 
-
-
+# initialize global_phi
 global_phi=[]
 for i in range(V):
     global_phi.append([])
     for j in range(K):
         global_phi[i].append(0)
-        
-
 
 ## create collection phi
 collection_phi=[]
@@ -103,14 +96,14 @@ array=[]
 x=[]
 global_NumOftopics=[]
 for i in range(K):
-	global_NumOftopics.append(0)
+    global_NumOftopics.append(0)
 
 c_NumOftopics=[]
 c_NumOftopics.append([])
 c_NumOftopics.append([])
 for i in range(K):
-	c_NumOftopics[0].append(0)
-	c_NumOftopics[1].append(0)
+    c_NumOftopics[0].append(0)
+    c_NumOftopics[1].append(0)
     
     
 for tokens in train_data:
@@ -122,7 +115,11 @@ for tokens in train_data:
     for i in range(K):
         doc_topics[size_of_doc-1].append(0)
     for token in tokens:
-        #vocabulary.add(token)
+        if token=='1':
+            continue
+        if token=='0':
+            continue
+
         random_topic=randint(0,K-1)
 
         randomnumber=random.uniform(0,1)
@@ -148,14 +145,14 @@ array_test=[]
 doc_topics_test=[]
 global_NumOftopics_test=[]
 for i in range(K):
-	global_NumOftopics_test.append(0)
+    global_NumOftopics_test.append(0)
 
 c_NumOftopics_test=[]
 c_NumOftopics_test.append([])
 c_NumOftopics_test.append([])
 for i in range(K):
-	c_NumOftopics_test[0].append(0)
-	c_NumOftopics_test[1].append(0)
+    c_NumOftopics_test[0].append(0)
+    c_NumOftopics_test[1].append(0)
     
     
 d=-1
@@ -168,6 +165,9 @@ for tokens in test_data:
         doc_topics_test[len(doc_topics_test)-1].append(0)
         
     for i in range(len(tokens)):
+        if i==0:
+            continue
+
         random_topic=randint(0,K-1)
         randomnumber=random.uniform(0,1)
         x_d_i=0
@@ -214,13 +214,13 @@ def get_distribution_doc_topic(flag,c_index,doc_index,token,token_index,doc_topi
         for i in range(K):
             distribution_i=(doc_topics[doc_index][i]+alpha)/float(len(array[doc_index])-1+K*alpha)
             sum_nk=c_NumOftopics[c_index][i]
-            distribution_i*=(collection_phi[c_index][token2index[token]][i]+beta)/float(sum_nk+V_train*beta)
+            distribution_i*=(collection_phi[c_index][token2index[token]][i]+beta)/float(sum_nk+V*beta)
             distributions.append(distribution_i)
     elif flag==0:
         for i in range(K):
             distribution_i=(doc_topics[doc_index][i]+alpha)/float(len(array[doc_index])-1+K*alpha)
             sum_nk=global_NumOftopics[i]
-            distribution_i*=(global_phi[token2index[token]][i]+beta)/float(sum_nk+V_train*beta)
+            distribution_i*=(global_phi[token2index[token]][i]+beta)/float(sum_nk+V*beta)
             distributions.append(distribution_i)
     randomnumber=random.uniform(0,1)
     sumofd=sum(distributions)
@@ -239,7 +239,7 @@ def get_distribution_doc_topic(flag,c_index,doc_index,token,token_index,doc_topi
     return K-1
 
 
-##
+
 def smaple_xdi(c_index,doc_index,token,x,z_d_token):
     global vocabulary
     global global_phi
@@ -248,10 +248,10 @@ def smaple_xdi(c_index,doc_index,token,x,z_d_token):
     global V
     
     sum_nk=global_NumOftopics[z_d_token]
-    p_0=(1-lmd)*(float(global_phi[token2index[token]][z_d_token]+beta)/(sum_nk+V_train*beta))
+    p_0=(1-lmd)*(float(global_phi[token2index[token]][z_d_token]+beta)/(sum_nk+V*beta))
 
     sum_nk_c=c_NumOftopics[c_index][z_d_token]
-    p_1=lmd*(float(collection_phi[c_index][token2index[token]][z_d_token]+beta)/(sum_nk_c+V_train*beta))
+    p_1=lmd*(float(collection_phi[c_index][token2index[token]][z_d_token]+beta)/(sum_nk_c+V*beta))
     
     randomnumber=random.uniform(0,1)
 
@@ -326,9 +326,9 @@ def generate_phi_theta():
         sum_nk_c0=c_NumOftopics[0][i]
 
         for ele in vocabulary:
-            phi_g_info[token2index[ele]][i]=(global_phi[token2index[ele]][i]+beta)/(sum_nk+V_train*beta)
-            phi_c_info_array[0][token2index[ele]][i]=(collection_phi[0][token2index[ele]][i]+beta)/(sum_nk_c0+V_train*beta)
-            phi_c_info_array[1][token2index[ele]][i]=(collection_phi[1][token2index[ele]][i]+beta)/(sum_nk_c1+V_train*beta)
+            phi_g_info[token2index[ele]][i]=(global_phi[token2index[ele]][i]+beta)/(sum_nk+V*beta)
+            phi_c_info_array[0][token2index[ele]][i]=(collection_phi[0][token2index[ele]][i]+beta)/(sum_nk_c0+V*beta)
+            phi_c_info_array[1][token2index[ele]][i]=(collection_phi[1][token2index[ele]][i]+beta)/(sum_nk_c1+V*beta)
 
 
 def compute_train_log_likelihood(data,theta_info,phi_g_info,phi_c_info_array):
@@ -338,6 +338,8 @@ def compute_train_log_likelihood(data,theta_info,phi_g_info,phi_c_info_array):
         d+=1
         tokens_sum=0
         for token in tokens:
+            if token=='1' or token=='0':
+                continue
             pre_log_sum=0
             for k in range(K):
                 theta_dz=theta_info[d][k]
@@ -355,6 +357,8 @@ def compute_z_x_testingfile():
         d+=1
         i=-1
         for token in tokens:
+            if token=='0' or token=='1':
+                continue
             i+=1
             flag=x_test[d][i]
             z_d_token=get_distribution_doc_topic(flag,int(tokens[0]),d,token,i,doc_topics_test,True,array_test)
@@ -442,21 +446,20 @@ def burn_in():
 
 def output_tofile(outputtofile):
     global vocabulary
-    global vocabulary_train
-    global vocabulary_test
+    global vocabulary
 
     lines=outputtofile.split("-")
     with open(outputtofile,"w+") as f:
         #list_vocabulary=list(vocabulary)
         if lines[1]=="phi":
-            for ele in vocabulary_train:
+            for ele in vocabulary:
                 tempstr=ele
                 for i in range(K):
                     tempstr+=" {:.13f}".format(store_g_phi[token2index[ele]][i])
                 f.write(tempstr)
                 f.write("\n")
         elif lines[1]=="phi0":
-            for ele in vocabulary_train:
+            for ele in vocabulary:
                 tempstr=ele
                 for i in range(K):
                     tempstr+=" {:.13f}".format(store_c_phi[0][token2index[ele]][i])
@@ -498,15 +501,17 @@ for t in range(num_of_iterations):
     start=time.time()
     print "iteration:",t
     for tokens in train_data:
-    	d+=1
-    	i=-1
-    	for token in tokens:
-    		i+=1
-    		flag=x[d][i]
-    		z_d_token=get_distribution_doc_topic(flag,int(tokens[0]),d,token,i,doc_topics,False,array)
-    		#z_d_token=np.random.choice(K,1,p=get_distribution_doc_topic(flag,int(tokens[0]),d,token,doc_topics))[0]
-    		x[d][i]=smaple_xdi(int(tokens[0]),d,token,x,z_d_token)
-    		update_dic(z_d_token,token,i,d,int(tokens[0]),flag)
+        d+=1
+        i=-1
+        for token in tokens:
+            if token=='0' or token=='1':
+                continue
+            i+=1
+            flag=x[d][i]
+            z_d_token=get_distribution_doc_topic(flag,int(tokens[0]),d,token,i,doc_topics,False,array)
+            #z_d_token=np.random.choice(K,1,p=get_distribution_doc_topic(flag,int(tokens[0]),d,token,doc_topics))[0]
+            x[d][i]=smaple_xdi(int(tokens[0]),d,token,x,z_d_token)
+            update_dic(z_d_token,token,i,d,int(tokens[0]),flag)
     
     generate_phi_theta()
     if t>=burnin:
